@@ -1,8 +1,10 @@
 package iniparser
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"strings"
 )
 
@@ -24,7 +26,7 @@ func (i *iniParser) populateINI(lines []string) {
 	var title string
 	var sec section
 	for _, line := range lines {
-		
+
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, ";") {
 			continue
@@ -71,4 +73,19 @@ func (i *iniParser) GetSectionNames() []string {
 		names = append(names, key)
 	}
 	return names
+}
+
+func (i *iniParser) GetSections() map[string]section {
+	return i.sections
+}
+
+func (i *iniParser) Get(sectionName string, key string) (string, error) {
+	if reflect.DeepEqual(i.sections[sectionName], section{}) {
+		return "", fmt.Errorf("section not found")
+	}
+	if i.sections[sectionName].map_[key] == "" {
+		return "", fmt.Errorf("key not found")
+	}
+	return i.sections[sectionName].map_[key], nil
+
 }

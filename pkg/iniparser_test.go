@@ -1,6 +1,7 @@
 package iniparser
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -106,4 +107,58 @@ func TestGetSectionNames(t *testing.T) {
 	expected := []string{"owner", "database"}
 
 	assertEquality(t, names, expected)
+}
+
+func TestGetSections(t *testing.T) {
+	parser := InitParser()
+	parser.LoadFromFile(path)
+	got := parser.GetSections()
+
+	expected := populateExpectedNormal(t)
+	assertEquality(t, got, expected)
+}
+
+func TestGet(t *testing.T) {
+
+	testcases := []struct {
+		testcaseName string
+		sectionName  string
+		key          string
+		expected     string
+		err          error
+	}{
+		{
+			testcaseName: "Normal case: section and key are present",
+			sectionName:  "database",
+			key:          "server",
+			expected:     "192.0.2.62",
+			err:          nil,
+		},
+		{
+			testcaseName: "corner case: section not found",
+			sectionName:  "user",
+			key:          "server",
+			err:          fmt.Errorf("section not found"),
+		},
+		{
+			testcaseName: "corner case: key not found",
+			sectionName:  "database",
+			key:          "size",
+			err:          fmt.Errorf("key not found"),
+		},
+	}
+	for _, testcase := range testcases {
+
+		t.Run(testcase.testcaseName, func(t *testing.T) {
+			parser := InitParser()
+			parser.LoadFromFile(path)
+			got, err := parser.Get(testcase.sectionName, testcase.key)
+			if testcase.err == nil {
+				assertEquality(t, got, testcase.expected)
+			} else {
+				assertEquality(t, err, testcase.err)
+			}
+		})
+	}
+
 }
