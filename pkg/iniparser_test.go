@@ -57,3 +57,17 @@ func TestLoadFromFile(t *testing.T) {
 		t.Errorf("Error! wanted:%v \n , got : %v \n", expected, parser.sections)
 	}
 }
+
+func TestGetSectionNames(t *testing.T) {
+	parser := InitParser()
+	parser.LoadFromFile(path)
+	names := parser.GetSectionNames()
+
+	expected := []string{"owner", "database"}
+
+
+	if !reflect.DeepEqual(names, expected) {
+		t.Errorf("Error! wanted:%q \n , got:%q \n", expected, names)
+	}
+
+}

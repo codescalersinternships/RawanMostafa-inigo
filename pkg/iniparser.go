@@ -58,3 +58,11 @@ func (i *iniParser) LoadFromFile(path string) {
 	}
 	i.LoadFromString(string(data))
 }
+
+func (i *iniParser) GetSectionNames() []string {
+	names := make([]string, 0)
+	for key := range i.sections {
+		names = append(names, key)
+	}
+	return names
+}
