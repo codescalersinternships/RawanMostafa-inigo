@@ -1,6 +1,8 @@
 package iniparser
 
 import (
+	"log"
+	"os"
 	"strings"
 )
 
@@ -18,10 +20,7 @@ func InitParser() iniParser {
 	}
 }
 
-func (i *iniParser) LoadFromString(file string) {
-
-	lines := strings.Split(file, "\n")
-
+func (i *iniParser) populateINI(lines []string) {
 	var title string
 	var sec section
 	for _, line := range lines {
@@ -43,4 +42,19 @@ func (i *iniParser) LoadFromString(file string) {
 	if title != "" {
 		i.sections[title] = sec
 	}
+}
+
+func (i *iniParser) LoadFromString(file string) {
+
+	lines := strings.Split(file, "\n")
+	i.populateINI(lines)
+}
+
+func (i *iniParser) LoadFromFile(path string) {
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatal("Error in reading the file")
+	}
+	i.LoadFromString(string(data))
 }
