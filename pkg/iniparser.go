@@ -24,7 +24,11 @@ func (i *iniParser) populateINI(lines []string) {
 	var title string
 	var sec section
 	for _, line := range lines {
+		
 		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, ";") {
+			continue
+		}
 		if strings.Contains(line, "[") && strings.Contains(line, "]") {
 			if title != "" {
 				i.sections[title] = sec
@@ -32,7 +36,9 @@ func (i *iniParser) populateINI(lines []string) {
 			title = strings.Trim(line, "[]")
 			title = strings.TrimSpace(title)
 			sec = section{map_: make(map[string]string)}
+
 		} else if strings.Contains(line, "=") {
+
 			parts := strings.Split(line, "=")
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
