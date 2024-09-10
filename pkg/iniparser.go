@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -103,11 +104,37 @@ func (i *iniParser) Set(sectionName string, key string, value string) error {
 
 func (i *iniParser) ToString() string {
 	var result string
-	for sectionName, section := range i.sections {
+	sectionNames := make([]string, 0)
+	for sectionName := range i.sections {
+		sectionNames = append(sectionNames, sectionName)
+	}
+	sort.Strings(sectionNames)
+
+	for _, sectionName := range sectionNames {
+		keys := make([]string, 0)
 		result += "[" + sectionName + "]\n"
-		for key, value := range section.map_ {
-			result += key + "=" + value + "\n"
+		for key := range i.sections[sectionName].map_ {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			result += key + " = " + i.sections[sectionName].map_[key] + "\n"
 		}
 	}
 	return result
+}
+
+func (i *iniParser) SaveToFile(path string) error {
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("error in opening the file: %v", err)
+	}
+	defer file.Close()
+
+	stringFile := i.ToString()
+	_, err = file.WriteString(stringFile)
+	if err != nil {
+		return fmt.Errorf("error in writing to the file: %v", err)
+	}
+	return nil
 }

@@ -2,6 +2,7 @@ package iniparser
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -16,7 +17,10 @@ organization = Acme Widgets Inc.
 [database]
 ; use IP address in case network name resolution is not working
 server = 192.0.2.62
-port = 143`
+port = 143
+[section]
+key0 = val0    
+key1 = val1`
 
 func populateExpectedNormal(t *testing.T) map[string]section {
 	t.Helper()
@@ -31,6 +35,12 @@ func populateExpectedNormal(t *testing.T) map[string]section {
 			map_: map[string]string{
 				"server": "192.0.2.62",
 				"port":   "143",
+			},
+		},
+		"section": {
+			map_: map[string]string{
+				"key0": "val0",
+				"key1": "val1",
 			},
 		},
 	}
@@ -61,6 +71,16 @@ func assertEquality(t *testing.T, obj1 any, obj2 any) {
 	if !reflect.DeepEqual(obj1, obj2) {
 		t.Errorf("Error! values mismatch, wanted %v got %v", obj1, obj2)
 	}
+}
+
+func assertFile(t *testing.T, filePath string, expectedData string) {
+	t.Helper()
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Errorf("Error! : %v\n", err)
+	}
+	assertEquality(t, expectedData, string(data))
+
 }
 
 func TestLoadFromString(t *testing.T) {
@@ -106,7 +126,7 @@ func TestGetSectionNames(t *testing.T) {
 	parser.LoadFromFile(path)
 	names := parser.GetSectionNames()
 
-	expected := []string{"owner", "database"}
+	expected := []string{"owner", "database", "section"}
 
 	assertEquality(t, expected, names)
 }
@@ -221,4 +241,18 @@ func TestToString(t *testing.T) {
 	parser2.LoadFromString(got)
 
 	assertEquality(t, parser1.sections, parser2.sections)
+}
+
+func TestSaveToFile(t *testing.T) {
+	const outPath = "testdata/out.ini"
+	parser := InitParser()
+	parser.LoadFromFile(path)
+
+	err := parser.SaveToFile(outPath)
+	if err != nil {
+		t.Errorf("Error! %v", err)
+	}
+
+	stringFile := parser.ToString()
+	assertFile(t, outPath, stringFile)
 }
