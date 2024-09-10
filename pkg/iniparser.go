@@ -2,7 +2,6 @@ package iniparser
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"reflect"
 	"sort"
@@ -59,13 +58,18 @@ func (i *iniParser) LoadFromString(file string) {
 	i.populateINI(lines)
 }
 
-func (i *iniParser) LoadFromFile(path string) {
+func (i *iniParser) LoadFromFile(path string) error {
+
+	if !strings.HasSuffix(path, ".ini") {
+		return fmt.Errorf("this is not an ini file")
+	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatal("Error in reading the file")
+		return fmt.Errorf("error in reading the file: %v", err)
 	}
 	i.LoadFromString(string(data))
+	return nil
 }
 
 func (i *iniParser) GetSectionNames() []string {

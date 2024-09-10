@@ -116,14 +116,21 @@ func TestLoadFromFile(t *testing.T) {
 	expected := populateExpectedNormal(t)
 
 	parser := InitParser()
-	parser.LoadFromFile(path)
+
+	err := parser.LoadFromFile(path)
+	if err != nil {
+		t.Errorf("Error! %v", err)
+	}
 
 	assertEquality(t, expected, parser.sections)
 }
 
 func TestGetSectionNames(t *testing.T) {
 	parser := InitParser()
-	parser.LoadFromFile(path)
+	err := parser.LoadFromFile(path)
+	if err != nil {
+		t.Errorf("Error! %v", err)
+	}
 	names := parser.GetSectionNames()
 
 	expected := []string{"owner", "database", "section"}
@@ -133,7 +140,11 @@ func TestGetSectionNames(t *testing.T) {
 
 func TestGetSections(t *testing.T) {
 	parser := InitParser()
-	parser.LoadFromFile(path)
+	err := parser.LoadFromFile(path)
+	if err != nil {
+		t.Errorf("Error! %v", err)
+	}
+
 	got := parser.GetSections()
 
 	expected := populateExpectedNormal(t)
@@ -173,7 +184,10 @@ func TestGet(t *testing.T) {
 
 		t.Run(testcase.testcaseName, func(t *testing.T) {
 			parser := InitParser()
-			parser.LoadFromFile(path)
+			err := parser.LoadFromFile(path)
+			if err != nil {
+				t.Errorf("Error! %v", err)
+			}
 			got, err := parser.Get(testcase.sectionName, testcase.key)
 			if testcase.err == nil {
 				assertEquality(t, testcase.expected, got)
@@ -218,8 +232,11 @@ func TestSet(t *testing.T) {
 
 		t.Run(testcase.testcaseName, func(t *testing.T) {
 			parser := InitParser()
-			parser.LoadFromFile(path)
-			err := parser.Set(testcase.sectionName, testcase.key, testcase.value)
+			err := parser.LoadFromFile(path)
+			if err != nil {
+				t.Errorf("Error! %v", err)
+			}
+			err = parser.Set(testcase.sectionName, testcase.key, testcase.value)
 			if testcase.err == nil {
 				value := parser.sections[testcase.sectionName].map_[testcase.key]
 				assertEquality(t, testcase.value, value)
@@ -246,9 +263,12 @@ func TestToString(t *testing.T) {
 func TestSaveToFile(t *testing.T) {
 	const outPath = "testdata/out.ini"
 	parser := InitParser()
-	parser.LoadFromFile(path)
+	err := parser.LoadFromFile(path)
+	if err != nil {
+		t.Errorf("Error! %v", err)
+	}
 
-	err := parser.SaveToFile(outPath)
+	err = parser.SaveToFile(outPath)
 	if err != nil {
 		t.Errorf("Error! %v", err)
 	}
