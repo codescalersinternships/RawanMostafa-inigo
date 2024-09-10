@@ -1,3 +1,6 @@
+// Package iniparser implements a parser for ini files
+//
+// The iniparser package should only be used for for ini files and doesn't support any other types of files
 package iniparser
 
 import (
@@ -8,14 +11,26 @@ import (
 	"strings"
 )
 
+// The section acts as a type representing the value of the iniparser map
 type section struct {
 	map_ map[string]string
 }
 
+// The iniParser acts as the data structure storing all of the parsed sections
+// It has the following format:
+//
+//			"sectionName": {
+//				map_: map[string]string{
+//					"key0":   "value0",
+//					"key1":   "value1",
+//				},
+//	},
 type iniParser struct {
 	sections map[string]section
 }
 
+// InitParser returns an iniParser type object
+// InitParser is an essential call to get a parser to be able to access its APIs
 func InitParser() iniParser {
 	return iniParser{
 		make(map[string]section),
@@ -52,12 +67,22 @@ func (i *iniParser) populateINI(lines []string) {
 	}
 }
 
+// LoadFromString is a method that takes a string ini configs and parses them into the caller iniParser object
+// LoadFromString assumes that:
+// 1- There're no global keys, every keys need to be part of a section
+// 2- The key value separator is just =
+// 3- Comments are only valid at the beginning of the line
 func (i *iniParser) LoadFromString(file string) {
 
 	lines := strings.Split(file, "\n")
 	i.populateINI(lines)
 }
 
+// LoadFromFile is a method that takes a path to an ini file and parses it into the caller iniParser object
+// LoadFromFile assumes that:
+// 1- There're no global keys, every keys need to be part of a section
+// 2- The key value separator is just =
+// 3- Comments are only valid at the beginning of the line
 func (i *iniParser) LoadFromFile(path string) error {
 
 	if !strings.HasSuffix(path, ".ini") {
@@ -72,6 +97,8 @@ func (i *iniParser) LoadFromFile(path string) error {
 	return nil
 }
 
+// GetSectionNames is a method that returns an array of strings having the names
+// of the sections of the caller iniParser object
 func (i *iniParser) GetSectionNames() []string {
 	names := make([]string, 0)
 	for key := range i.sections {
@@ -80,10 +107,19 @@ func (i *iniParser) GetSectionNames() []string {
 	return names
 }
 
+// GetSections is a method that returns a map[string]section representing
+// the data structure of the caller iniParser object
 func (i *iniParser) GetSections() map[string]section {
 	return i.sections
 }
 
+// Get is a method that takes a string for the sectionName and a string for the key
+// and returns the value of this key and an error
+// Error formats for different cases:
+//
+//	If the section name passed isn't found --> "section not found"
+//	If the key passed isn't found in the passed section --> "key not found"
+//	else --> nil
 func (i *iniParser) Get(sectionName string, key string) (string, error) {
 	if reflect.DeepEqual(i.sections[sectionName], section{}) {
 		return "", fmt.Errorf("section not found")
@@ -95,6 +131,13 @@ func (i *iniParser) Get(sectionName string, key string) (string, error) {
 
 }
 
+// Set is a method that takes a string for the sectionName, a string for the key and a string for the value of this key
+// It sets the passed key if found with the passed value and returns an error
+// Error formats for different cases:
+//
+//	If the section name passed isn't found --> "section not found"
+//	If the key passed isn't found in the passed section --> "key not found"
+//	else --> nil
 func (i *iniParser) Set(sectionName string, key string, value string) error {
 	if reflect.DeepEqual(i.sections[sectionName], section{}) {
 		return fmt.Errorf("section not found")
@@ -106,6 +149,8 @@ func (i *iniParser) Set(sectionName string, key string, value string) error {
 	return nil
 }
 
+// ToString is a method that returns the parsed ini map of the caller object as one string
+// The returned string won't include the comments
 func (i *iniParser) ToString() string {
 	var result string
 	sectionNames := make([]string, 0)
@@ -128,6 +173,13 @@ func (i *iniParser) ToString() string {
 	return result
 }
 
+// SaveToFile is a method that takes a path to an output file and returns an error
+// It saves the parsed ini map of the caller object into a file
+// Error formats for different cases:
+//
+//	If the file couldn't be opened --> "error in opening the file:"
+//	If writing to the file failed --> "error in writing to the file:"
+//	else --> nil
 func (i *iniParser) SaveToFile(path string) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
