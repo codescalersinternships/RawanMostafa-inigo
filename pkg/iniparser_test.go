@@ -8,6 +8,16 @@ import (
 
 const path = "testdata/file.ini"
 
+const stringINI = `; last modified 1 April 2001 by John Doe
+[owner]
+name = John Doe
+organization = Acme Widgets Inc.
+
+[database]
+; use IP address in case network name resolution is not working
+server = 192.0.2.62
+port = 143`
+
 func populateExpectedNormal(t *testing.T) map[string]section {
 	t.Helper()
 	expected := map[string]section{
@@ -55,17 +65,9 @@ func assertEquality(t *testing.T, obj1 any, obj2 any) {
 
 func TestLoadFromString(t *testing.T) {
 	t.Run("test normal ini file", func(t *testing.T) {
-		s := `; last modified 1 April 2001 by John Doe
-				[owner]
-				name = John Doe
-				organization = Acme Widgets Inc.
-	
-				[database]
-				; use IP address in case network name resolution is not working
-				server = 192.0.2.62
-				port = 143`
+
 		parser := InitParser()
-		parser.LoadFromString(s)
+		parser.LoadFromString(stringINI)
 
 		expected := populateExpectedNormal(t)
 
@@ -74,14 +76,14 @@ func TestLoadFromString(t *testing.T) {
 	})
 
 	t.Run("test empty section ini file", func(t *testing.T) {
-		s := `; last modified 1 April 2001 by John Doe
+		const emptySectionINI = `; last modified 1 April 2001 by John Doe
 				[owner]
 				name = John Doe
 				organization = Acme Widgets Inc.
 	
 				[database]`
 		parser := InitParser()
-		parser.LoadFromString(s)
+		parser.LoadFromString(emptySectionINI)
 
 		expected := populateExpectedEmptySection(t)
 
@@ -106,7 +108,7 @@ func TestGetSectionNames(t *testing.T) {
 
 	expected := []string{"owner", "database"}
 
-	assertEquality(t, names, expected)
+	assertEquality(t, expected, names)
 }
 
 func TestGetSections(t *testing.T) {
@@ -115,7 +117,7 @@ func TestGetSections(t *testing.T) {
 	got := parser.GetSections()
 
 	expected := populateExpectedNormal(t)
-	assertEquality(t, got, expected)
+	assertEquality(t, expected, got)
 }
 
 func TestGet(t *testing.T) {
@@ -154,9 +156,9 @@ func TestGet(t *testing.T) {
 			parser.LoadFromFile(path)
 			got, err := parser.Get(testcase.sectionName, testcase.key)
 			if testcase.err == nil {
-				assertEquality(t, got, testcase.expected)
+				assertEquality(t, testcase.expected, got)
 			} else {
-				assertEquality(t, err, testcase.err)
+				assertEquality(t, testcase.err, err)
 			}
 		})
 	}
@@ -200,11 +202,23 @@ func TestSet(t *testing.T) {
 			err := parser.Set(testcase.sectionName, testcase.key, testcase.value)
 			if testcase.err == nil {
 				value := parser.sections[testcase.sectionName].map_[testcase.key]
-				assertEquality(t, value, testcase.value)
+				assertEquality(t, testcase.value, value)
 			} else {
-				assertEquality(t, err, testcase.err)
+				assertEquality(t, testcase.err, err)
 			}
 		})
 	}
 
+}
+
+func TestToString(t *testing.T) {
+	parser1 := InitParser()
+	parser2 := InitParser()
+
+	parser1.LoadFromString(stringINI)
+	got := parser1.ToString()
+
+	parser2.LoadFromString(got)
+
+	assertEquality(t, parser1.sections, parser2.sections)
 }

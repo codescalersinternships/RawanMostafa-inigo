@@ -100,3 +100,14 @@ func (i *iniParser) Set(sectionName string, key string, value string) error {
 	i.sections[sectionName].map_[key] = value
 	return nil
 }
+
+func (i *iniParser) ToString() string {
+	var result string
+	for sectionName, section := range i.sections {
+		result += "[" + sectionName + "]\n"
+		for key, value := range section.map_ {
+			result += key + "=" + value + "\n"
+		}
+	}
+	return result
+}
