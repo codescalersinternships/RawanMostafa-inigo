@@ -89,3 +89,14 @@ func (i *iniParser) Get(sectionName string, key string) (string, error) {
 	return i.sections[sectionName].map_[key], nil
 
 }
+
+func (i *iniParser) Set(sectionName string, key string, value string) error {
+	if reflect.DeepEqual(i.sections[sectionName], section{}) {
+		return fmt.Errorf("section not found")
+	}
+	if i.sections[sectionName].map_[key] == "" {
+		return fmt.Errorf("key not found")
+	}
+	i.sections[sectionName].map_[key] = value
+	return nil
+}

@@ -162,3 +162,49 @@ func TestGet(t *testing.T) {
 	}
 
 }
+
+func TestSet(t *testing.T) {
+
+	testcases := []struct {
+		testcaseName string
+		sectionName  string
+		key          string
+		value        string
+		err          error
+	}{
+		{
+			testcaseName: "Normal case: section and key are present",
+			sectionName:  "database",
+			key:          "server",
+			value:        "127.0.0.1",
+			err:          nil,
+		},
+		{
+			testcaseName: "corner case: section not found",
+			sectionName:  "user",
+			key:          "server",
+			err:          fmt.Errorf("section not found"),
+		},
+		{
+			testcaseName: "corner case: key not found",
+			sectionName:  "database",
+			key:          "size",
+			err:          fmt.Errorf("key not found"),
+		},
+	}
+	for _, testcase := range testcases {
+
+		t.Run(testcase.testcaseName, func(t *testing.T) {
+			parser := InitParser()
+			parser.LoadFromFile(path)
+			err := parser.Set(testcase.sectionName, testcase.key, testcase.value)
+			if testcase.err == nil {
+				value := parser.sections[testcase.sectionName].map_[testcase.key]
+				assertEquality(t, value, testcase.value)
+			} else {
+				assertEquality(t, err, testcase.err)
+			}
+		})
+	}
+
+}
