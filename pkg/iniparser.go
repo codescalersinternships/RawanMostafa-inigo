@@ -99,7 +99,7 @@ func (i *iniParser) LoadFromFile(path string) error {
 
 // GetSectionNames is a method that returns an array of strings having the names
 // of the sections of the caller iniParser object
-func (i *iniParser) GetSectionNames() []string {
+func (i iniParser) GetSectionNames() []string {
 	names := make([]string, 0)
 	for key := range i.sections {
 		names = append(names, key)
@@ -109,7 +109,7 @@ func (i *iniParser) GetSectionNames() []string {
 
 // GetSections is a method that returns a map[string]section representing
 // the data structure of the caller iniParser object
-func (i *iniParser) GetSections() map[string]section {
+func (i iniParser) GetSections() map[string]section {
 	return i.sections
 }
 
@@ -120,7 +120,7 @@ func (i *iniParser) GetSections() map[string]section {
 //	If the section name passed isn't found --> "section not found"
 //	If the key passed isn't found in the passed section --> "key not found"
 //	else --> nil
-func (i *iniParser) Get(sectionName string, key string) (string, error) {
+func (i iniParser) Get(sectionName string, key string) (string, error) {
 	if reflect.DeepEqual(i.sections[sectionName], section{}) {
 		return "", fmt.Errorf("section not found")
 	}
@@ -151,7 +151,7 @@ func (i *iniParser) Set(sectionName string, key string, value string) error {
 
 // ToString is a method that returns the parsed ini map of the caller object as one string
 // The returned string won't include the comments
-func (i *iniParser) ToString() string {
+func (i iniParser) ToString() string {
 	var result string
 	sectionNames := make([]string, 0)
 	for sectionName := range i.sections {
@@ -180,7 +180,7 @@ func (i *iniParser) ToString() string {
 //	If the file couldn't be opened --> "error in opening the file:"
 //	If writing to the file failed --> "error in writing to the file:"
 //	else --> nil
-func (i *iniParser) SaveToFile(path string) error {
+func (i iniParser) SaveToFile(path string) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("error in opening the file: %v", err)
