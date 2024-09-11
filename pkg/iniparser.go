@@ -42,7 +42,7 @@ func InitParser() iniParser {
 	}
 }
 
-func (i *iniParser) populateINI(lines []string) {
+func (i iniParser) populateINI(lines []string) {
 	var title string
 	var sec section
 	for _, line := range lines {
@@ -77,7 +77,7 @@ func (i *iniParser) populateINI(lines []string) {
 // 1- There're no global keys, every keys need to be part of a section
 // 2- The key value separator is just =
 // 3- Comments are only valid at the beginning of the line
-func (i *iniParser) LoadFromString(file string) {
+func (i iniParser) LoadFromString(file string) {
 
 	lines := strings.Split(file, "\n")
 	i.populateINI(lines)
@@ -88,7 +88,7 @@ func (i *iniParser) LoadFromString(file string) {
 // 1- There're no global keys, every keys need to be part of a section
 // 2- The key value separator is just =
 // 3- Comments are only valid at the beginning of the line
-func (i *iniParser) LoadFromFile(path string) error {
+func (i iniParser) LoadFromFile(path string) error {
 
 	if !strings.HasSuffix(path, ".ini") {
 		return errNotINI
@@ -151,7 +151,7 @@ func (i iniParser) Get(sectionName string, key string) (string, error) {
 //	If the section name passed isn't found --> "section not found"
 //	If the key passed isn't found in the passed section --> "key not found"
 //	else --> nil
-func (i *iniParser) Set(sectionName string, key string, value string) error {
+func (i iniParser) Set(sectionName string, key string, value string) error {
 	if _, ok := i.sections[sectionName]; !ok {
 		return errNoSection
 	}
