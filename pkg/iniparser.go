@@ -4,6 +4,7 @@
 package iniparser
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -86,7 +87,7 @@ func (i *iniParser) LoadFromString(file string) {
 func (i *iniParser) LoadFromFile(path string) error {
 
 	if !strings.HasSuffix(path, ".ini") {
-		return fmt.Errorf("this is not an ini file")
+		return errors.New("this is not an ini file")
 	}
 
 	data, err := os.ReadFile(path)
@@ -121,11 +122,12 @@ func (i iniParser) GetSections() map[string]section {
 //	If the key passed isn't found in the passed section --> "key not found"
 //	else --> nil
 func (i iniParser) Get(sectionName string, key string) (string, error) {
+
 	if reflect.DeepEqual(i.sections[sectionName], section{}) {
-		return "", fmt.Errorf("section not found")
+		return "", errors.New("section not found")
 	}
 	if i.sections[sectionName].map_[key] == "" {
-		return "", fmt.Errorf("key not found")
+		return "", errors.New("key not found")
 	}
 	return i.sections[sectionName].map_[key], nil
 
@@ -140,10 +142,10 @@ func (i iniParser) Get(sectionName string, key string) (string, error) {
 //	else --> nil
 func (i *iniParser) Set(sectionName string, key string, value string) error {
 	if reflect.DeepEqual(i.sections[sectionName], section{}) {
-		return fmt.Errorf("section not found")
+		return errors.New("section not found")
 	}
 	if i.sections[sectionName].map_[key] == "" {
-		return fmt.Errorf("key not found")
+		return errors.New("key not found")
 	}
 	i.sections[sectionName].map_[key] = value
 	return nil
