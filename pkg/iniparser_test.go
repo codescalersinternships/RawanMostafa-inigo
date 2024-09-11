@@ -113,16 +113,45 @@ func TestLoadFromString(t *testing.T) {
 
 func TestLoadFromFile(t *testing.T) {
 
-	expected := populateExpectedNormal(t)
+	expectedFile := populateExpectedNormal(t)
 
-	parser := InitParser()
-
-	err := parser.LoadFromFile(path)
-	if err != nil {
-		t.Errorf("Error! %v", err)
+	testcases := []struct {
+		testcaseName string
+		filePath     string
+		expected     map[string]section
+		err          error
+	}{
+		{
+			testcaseName: "Normal case: ini file is present",
+			filePath:     "testdata/file.ini",
+			expected:     expectedFile,
+			err:          nil,
+		},
+		{
+			testcaseName: "corner case: not an ini file",
+			filePath:     "testdata/file.txt",
+			err:          fmt.Errorf("this is not an ini file"),
+		},
+		{
+			testcaseName: "corner case: file not found",
+			filePath:     "testdata/filex.ini",
+			err:          fmt.Errorf("error in reading the file: open testdata/filex.ini: no such file or directory"),
+		},
 	}
+	for _, testcase := range testcases {
 
-	assertEquality(t, expected, parser.sections)
+		t.Run(testcase.testcaseName, func(t *testing.T) {
+			parser := InitParser()
+
+			err := parser.LoadFromFile(testcase.filePath)
+			if testcase.err == nil {
+				assertEquality(t, expectedFile, parser.sections)
+			} else {
+				assertEquality(t, testcase.err, err)
+			}
+
+		})
+	}
 }
 
 func TestGetSectionNames(t *testing.T) {
