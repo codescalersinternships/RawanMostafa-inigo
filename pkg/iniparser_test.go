@@ -154,29 +154,54 @@ func TestLoadFromFile(t *testing.T) {
 }
 
 func TestGetSectionNames(t *testing.T) {
-	parser := InitParser()
-	err := parser.LoadFromFile(path)
-	if err != nil {
-		t.Errorf("Error! %v", err)
-	}
-	names := parser.GetSectionNames()
+	t.Run("Normal case: sections are not empty", func(t *testing.T) {
 
-	expected := []string{"owner", "database", "section"}
+		parser := InitParser()
+		err := parser.LoadFromFile(path)
+		if err != nil {
+			t.Errorf("Error! %v", err)
+		}
+		names, err := parser.GetSectionNames()
 
-	assertEquality(t, expected, names)
+		expected := []string{"database", "owner", "section"}
+
+		assertEquality(t, expected, names)
+		assertEquality(t, nil, err)
+	})
+
+	t.Run("Corner case: sections are empty", func(t *testing.T) {
+		parser := InitParser()
+
+		_, err := parser.GetSectionNames()
+
+		assertEquality(t, "this parser has no sections", err.Error())
+	})
 }
 
 func TestGetSections(t *testing.T) {
-	parser := InitParser()
-	err := parser.LoadFromFile(path)
-	if err != nil {
-		t.Errorf("Error! %v", err)
-	}
+	t.Run("Normal case: sections are not empty", func(t *testing.T) {
 
-	got := parser.GetSections()
+		parser := InitParser()
+		err := parser.LoadFromFile(path)
+		if err != nil {
+			t.Errorf("Error! %v", err)
+		}
 
-	expected := populateExpectedNormal(t)
-	assertEquality(t, expected, got)
+		got, err := parser.GetSections()
+
+		expected := populateExpectedNormal(t)
+		assertEquality(t, expected, got)
+		assertEquality(t, nil, err)
+	})
+
+	t.Run("Corner case: sections are empty", func(t *testing.T) {
+
+		parser := InitParser()
+
+		_, err := parser.GetSections()
+		assertEquality(t, "this parser has no sections", err.Error())
+	})
+
 }
 
 func TestGet(t *testing.T) {

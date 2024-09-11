@@ -7,10 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"reflect"
 	"sort"
 	"strings"
 )
+
+var errEmptyParser = errors.New("this parser has no sections")
+var errNoKey = errors.New("key not found")
+var errNoSection = errors.New("section not found")
+var errNotINI = errors.New("this is not an ini file")
 
 // The section acts as a type representing the value of the iniparser map
 type section struct {
@@ -87,7 +91,7 @@ func (i *iniParser) LoadFromString(file string) {
 func (i *iniParser) LoadFromFile(path string) error {
 
 	if !strings.HasSuffix(path, ".ini") {
-		return errors.New("this is not an ini file")
+		return errNotINI
 	}
 
 	data, err := os.ReadFile(path)
@@ -99,19 +103,26 @@ func (i *iniParser) LoadFromFile(path string) error {
 }
 
 // GetSectionNames is a method that returns an array of strings having the names
-// of the sections of the caller iniParser object
-func (i iniParser) GetSectionNames() []string {
+// of the sections of the caller iniParser object and an error in case of empty sections
+func (i iniParser) GetSectionNames() ([]string, error) {
+	if len(i.sections) == 0 {
+		return make([]string, 0), errEmptyParser
+	}
 	names := make([]string, 0)
 	for key := range i.sections {
 		names = append(names, key)
 	}
-	return names
+	sort.Strings(names)
+	return names, nil
 }
 
 // GetSections is a method that returns a map[string]section representing
-// the data structure of the caller iniParser object
-func (i iniParser) GetSections() map[string]section {
-	return i.sections
+// the data structure of the caller iniParser object and an error in case of empty sections
+func (i iniParser) GetSections() (map[string]section, error) {
+	if len(i.sections) == 0 {
+		return make(map[string]section, 0), errEmptyParser
+	}
+	return i.sections, nil
 }
 
 // Get is a method that takes a string for the sectionName and a string for the key
@@ -123,11 +134,11 @@ func (i iniParser) GetSections() map[string]section {
 //	else --> nil
 func (i iniParser) Get(sectionName string, key string) (string, error) {
 
-	if reflect.DeepEqual(i.sections[sectionName], section{}) {
-		return "", errors.New("section not found")
+	if _, ok := i.sections[sectionName]; !ok {
+		return "", errNoSection
 	}
-	if i.sections[sectionName].map_[key] == "" {
-		return "", errors.New("key not found")
+	if _, ok := i.sections[sectionName].map_[key]; !ok {
+		return "", errNoKey
 	}
 	return i.sections[sectionName].map_[key], nil
 
@@ -141,11 +152,11 @@ func (i iniParser) Get(sectionName string, key string) (string, error) {
 //	If the key passed isn't found in the passed section --> "key not found"
 //	else --> nil
 func (i *iniParser) Set(sectionName string, key string, value string) error {
-	if reflect.DeepEqual(i.sections[sectionName], section{}) {
-		return errors.New("section not found")
+	if _, ok := i.sections[sectionName]; !ok {
+		return errNoSection
 	}
-	if i.sections[sectionName].map_[key] == "" {
-		return errors.New("key not found")
+	if _, ok := i.sections[sectionName].map_[key]; !ok {
+		return errNoKey
 	}
 	i.sections[sectionName].map_[key] = value
 	return nil
