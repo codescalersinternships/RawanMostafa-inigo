@@ -162,9 +162,11 @@ func (i iniParser) Set(sectionName string, key string, value string) error {
 	return nil
 }
 
+
 // ToString is a method that returns the parsed ini map of the caller object as one string
 // The returned string won't include the comments
-func (i iniParser) ToString() string {
+// Also,it tells fmt pkg how to print the object
+func (i iniParser) String() string {
 	var result string
 	sectionNames := make([]string, 0)
 	for sectionName := range i.sections {
@@ -183,7 +185,7 @@ func (i iniParser) ToString() string {
 			result += key + " = " + i.sections[sectionName].map_[key] + "\n"
 		}
 	}
-	return result
+	return fmt.Sprint(result)
 }
 
 // SaveToFile is a method that takes a path to an output file and returns an error
@@ -200,7 +202,7 @@ func (i iniParser) SaveToFile(path string) error {
 	}
 	defer file.Close()
 
-	stringFile := i.ToString()
+	stringFile := i.String()
 	_, err = file.WriteString(stringFile)
 	if err != nil {
 		return fmt.Errorf("error in writing to the file: %v", err)

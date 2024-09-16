@@ -1,6 +1,7 @@
 package iniparser
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -301,16 +302,17 @@ func TestSet(t *testing.T) {
 
 }
 
-func TestToString(t *testing.T) {
+func TestString(t *testing.T) {
 	parser1 := InitParser()
 	parser2 := InitParser()
 
 	parser1.LoadFromString(stringINI)
-	got := parser1.ToString()
+	got := parser1.String()
 
 	parser2.LoadFromString(got)
 
 	assertEquality(t, parser1.sections, parser2.sections)
+	assertEquality(t, fmt.Sprint(parser1), fmt.Sprint(parser2))
 }
 
 func TestSaveToFile(t *testing.T) {
@@ -326,6 +328,6 @@ func TestSaveToFile(t *testing.T) {
 		t.Errorf("Error! %v", err)
 	}
 
-	stringFile := parser.ToString()
+	stringFile := parser.String()
 	assertFile(t, outPath, stringFile)
 }
