@@ -11,57 +11,47 @@ import (
 	"strings"
 )
 
-var errEmptyParser = errors.New("this parser has no sections")
-var errNoKey = errors.New("key not found")
-var errNoSection = errors.New("section not found")
-var errNotINI = errors.New("this is not an ini file")
+var ErrNoKey = errors.New("key not found")
+var ErrNoSection = errors.New("section not found")
+var ErrNotINI = errors.New("this is not an ini file")
 
 // The section acts as a type representing the value of the iniparser map
 type section struct {
 	map_ map[string]string
 }
 
-// The iniParser acts as the data structure storing all of the parsed sections
-// It has the following format:
-//
-//			"sectionName": {
-//				map_: map[string]string{
-//					"key0":   "value0",
-//					"key1":   "value1",
-//				},
-//	},
-type iniParser struct {
+// The Parser acts as the data structure storing all of the parsed sections
+type Parser struct {
 	sections map[string]section
 }
 
-// InitParser returns an iniParser type object
-// InitParser is an essential call to get a parser to be able to access its APIs
-func InitParser() iniParser {
-	return iniParser{
+// NewParser returns a Parser type object
+// NewParser is an essential call to get a parser to be able to access its APIs
+func NewParser() Parser {
+	return Parser{
 		make(map[string]section),
 	}
 }
 
-func (i iniParser) populateINI(lines []string) {
+func (i Parser) populateINI(lines []string) {
 	var title string
 	var sec section
 	for _, line := range lines {
 
 		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, ";") {
+		if line == "" || strings.HasPrefix(line, ";") || strings.HasPrefix(line, "#") {
 			continue
 		}
-		if strings.Contains(line, "[") && strings.Contains(line, "]") {
+		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
 			if title != "" {
 				i.sections[title] = sec
 			}
 			title = strings.Trim(line, "[]")
-			title = strings.TrimSpace(title)
 			sec = section{map_: make(map[string]string)}
 
 		} else if strings.Contains(line, "=") {
 
-			parts := strings.Split(line, "=")
+			parts := strings.SplitN(line, "=", 2)
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
 			sec.map_[key] = value
@@ -72,41 +62,41 @@ func (i iniParser) populateINI(lines []string) {
 	}
 }
 
-// LoadFromString is a method that takes a string ini configs and parses them into the caller iniParser object
+// LoadFromString is a method that takes a string ini configs and parses them into the caller Parser object
 // LoadFromString assumes that:
 // 1- There're no global keys, every keys need to be part of a section
 // 2- The key value separator is just =
 // 3- Comments are only valid at the beginning of the line
-func (i iniParser) LoadFromString(file string) {
+func (i Parser) LoadFromString(data string) {
 
-	lines := strings.Split(file, "\n")
+	lines := strings.Split(data, "\n")
 	i.populateINI(lines)
 }
 
-// LoadFromFile is a method that takes a path to an ini file and parses it into the caller iniParser object
+// LoadFromFile is a method that takes a path to an ini file and parses it into the caller Parser object
 // LoadFromFile assumes that:
 // 1- There're no global keys, every keys need to be part of a section
 // 2- The key value separator is just =
 // 3- Comments are only valid at the beginning of the line
-func (i iniParser) LoadFromFile(path string) error {
+func (i Parser) LoadFromFile(path string) error {
 
 	if !strings.HasSuffix(path, ".ini") {
-		return errNotINI
+		return ErrNotINI
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("error in reading the file: %v", err)
+		return fmt.Errorf("error in reading the file: %w", err)
 	}
 	i.LoadFromString(string(data))
 	return nil
 }
 
 // GetSectionNames is a method that returns an array of strings having the names
-// of the sections of the caller iniParser object and an error in case of empty sections
-func (i iniParser) GetSectionNames() ([]string, error) {
+// of the sections of the caller Parser object and an error in case of empty sections
+func (i Parser) GetSectionNames() ([]string, error) {
 	if len(i.sections) == 0 {
-		return make([]string, 0), errEmptyParser
+		return make([]string, 0), nil
 	}
 	names := make([]string, 0)
 	for key := range i.sections {
@@ -117,31 +107,20 @@ func (i iniParser) GetSectionNames() ([]string, error) {
 }
 
 // GetSections is a method that returns a map[string]section representing
-// the data structure of the caller iniParser object and an error in case of empty sections
-func (i iniParser) GetSections() (map[string]section, error) {
+// the data structure of the caller Parser object and an error in case of empty sections
+func (i Parser) GetSections() (map[string]section, error) {
 	if len(i.sections) == 0 {
-		return make(map[string]section, 0), errEmptyParser
+		return make(map[string]section, 0), nil
 	}
 	return i.sections, nil
 }
 
 // Get is a method that takes a string for the sectionName and a string for the key
-// and returns the value of this key and an error
-// Error formats for different cases:
-//
-//	If the section name passed isn't found --> "section not found"
-//	If the key passed isn't found in the passed section --> "key not found"
-//	else --> nil
-func (i iniParser) Get(sectionName string, key string) (string, error) {
+// and returns the value of this key and a boolean to indicate if found or not
+func (i Parser) Get(sectionName string, key string) (string, bool) {
 
-	if _, ok := i.sections[sectionName]; !ok {
-		return "", errNoSection
-	}
-	if _, ok := i.sections[sectionName].map_[key]; !ok {
-		return "", errNoKey
-	}
-	return i.sections[sectionName].map_[key], nil
-
+	val, exists := i.sections[sectionName].map_[key]
+	return val, exists
 }
 
 // Set is a method that takes a string for the sectionName, a string for the key and a string for the value of this key
@@ -151,22 +130,21 @@ func (i iniParser) Get(sectionName string, key string) (string, error) {
 //	If the section name passed isn't found --> "section not found"
 //	If the key passed isn't found in the passed section --> "key not found"
 //	else --> nil
-func (i iniParser) Set(sectionName string, key string, value string) error {
+func (i Parser) Set(sectionName string, key string, value string) error {
 	if _, ok := i.sections[sectionName]; !ok {
-		return errNoSection
+		return ErrNoSection
 	}
 	if _, ok := i.sections[sectionName].map_[key]; !ok {
-		return errNoKey
+		return ErrNoKey
 	}
 	i.sections[sectionName].map_[key] = value
 	return nil
 }
 
-
-// ToString is a method that returns the parsed ini map of the caller object as one string
+// String is a method that returns the parsed ini map of the caller object as one string
 // The returned string won't include the comments
 // Also,it tells fmt pkg how to print the object
-func (i iniParser) String() string {
+func (i Parser) String() string {
 	var result string
 	sectionNames := make([]string, 0)
 	for sectionName := range i.sections {
@@ -176,13 +154,13 @@ func (i iniParser) String() string {
 
 	for _, sectionName := range sectionNames {
 		keys := make([]string, 0)
-		result += "[" + sectionName + "]\n"
+		result += fmt.Sprintf("[%s]\n", sectionName)
 		for key := range i.sections[sectionName].map_ {
 			keys = append(keys, key)
 		}
 		sort.Strings(keys)
 		for _, key := range keys {
-			result += key + " = " + i.sections[sectionName].map_[key] + "\n"
+			result += fmt.Sprintf("%s = %s\n", key, i.sections[sectionName].map_[key])
 		}
 	}
 	return fmt.Sprint(result)
@@ -195,17 +173,17 @@ func (i iniParser) String() string {
 //	If the file couldn't be opened --> "error in opening the file:"
 //	If writing to the file failed --> "error in writing to the file:"
 //	else --> nil
-func (i iniParser) SaveToFile(path string) error {
+func (i Parser) SaveToFile(path string) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("error in opening the file: %v", err)
+		return fmt.Errorf("error in opening the file: %w", err)
 	}
 	defer file.Close()
 
 	stringFile := i.String()
 	_, err = file.WriteString(stringFile)
 	if err != nil {
-		return fmt.Errorf("error in writing to the file: %v", err)
+		return fmt.Errorf("error in writing to the file: %w", err)
 	}
 	return nil
 }

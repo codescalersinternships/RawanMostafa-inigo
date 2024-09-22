@@ -86,7 +86,7 @@ func assertFile(t *testing.T, filePath string, expectedData string) {
 func TestLoadFromString(t *testing.T) {
 	t.Run("test normal ini file", func(t *testing.T) {
 
-		parser := InitParser()
+		parser := NewParser()
 		parser.LoadFromString(stringINI)
 
 		expected := populateExpectedNormal(t)
@@ -102,7 +102,7 @@ func TestLoadFromString(t *testing.T) {
 				organization = Acme Widgets Inc.
 	
 				[database]`
-		parser := InitParser()
+		parser := NewParser()
 		parser.LoadFromString(emptySectionINI)
 
 		expected := populateExpectedEmptySection(t)
@@ -141,7 +141,7 @@ func TestLoadFromFile(t *testing.T) {
 	for _, testcase := range testcases {
 
 		t.Run(testcase.testcaseName, func(t *testing.T) {
-			parser := InitParser()
+			parser := NewParser()
 
 			err := parser.LoadFromFile(testcase.filePath)
 			if testcase.err == "" {
@@ -157,7 +157,7 @@ func TestLoadFromFile(t *testing.T) {
 func TestGetSectionNames(t *testing.T) {
 	t.Run("Normal case: sections are not empty", func(t *testing.T) {
 
-		parser := InitParser()
+		parser := NewParser()
 		err := parser.LoadFromFile(path)
 		if err != nil {
 			t.Errorf("Error! %v", err)
@@ -170,19 +170,12 @@ func TestGetSectionNames(t *testing.T) {
 		assertEquality(t, nil, err)
 	})
 
-	t.Run("Corner case: sections are empty", func(t *testing.T) {
-		parser := InitParser()
-
-		_, err := parser.GetSectionNames()
-
-		assertEquality(t, "this parser has no sections", err.Error())
-	})
 }
 
 func TestGetSections(t *testing.T) {
 	t.Run("Normal case: sections are not empty", func(t *testing.T) {
 
-		parser := InitParser()
+		parser := NewParser()
 		err := parser.LoadFromFile(path)
 		if err != nil {
 			t.Errorf("Error! %v", err)
@@ -195,14 +188,6 @@ func TestGetSections(t *testing.T) {
 		assertEquality(t, nil, err)
 	})
 
-	t.Run("Corner case: sections are empty", func(t *testing.T) {
-
-		parser := InitParser()
-
-		_, err := parser.GetSections()
-		assertEquality(t, "this parser has no sections", err.Error())
-	})
-
 }
 
 func TestGet(t *testing.T) {
@@ -212,42 +197,40 @@ func TestGet(t *testing.T) {
 		sectionName  string
 		key          string
 		expected     string
-		err          string
+		found        bool
 	}{
 		{
 			testcaseName: "Normal case: section and key are present",
 			sectionName:  "database",
 			key:          "server",
 			expected:     "192.0.2.62",
-			err:          "",
+			found:        true,
 		},
 		{
 			testcaseName: "corner case: section not found",
 			sectionName:  "user",
 			key:          "server",
-			err:          "section not found",
+			found:        false,
 		},
 		{
 			testcaseName: "corner case: key not found",
 			sectionName:  "database",
 			key:          "size",
-			err:          "key not found",
+			found:        false,
 		},
 	}
 	for _, testcase := range testcases {
 
 		t.Run(testcase.testcaseName, func(t *testing.T) {
-			parser := InitParser()
+			parser := NewParser()
 			err := parser.LoadFromFile(path)
 			if err != nil {
 				t.Errorf("Error! %v", err)
 			}
-			got, err := parser.Get(testcase.sectionName, testcase.key)
-			if testcase.err == "" {
-				assertEquality(t, testcase.expected, got)
-			} else {
-				assertEquality(t, testcase.err, err.Error())
-			}
+			got, found := parser.Get(testcase.sectionName, testcase.key)
+			assertEquality(t, testcase.expected, got)
+			assertEquality(t, testcase.found, found)
+
 		})
 	}
 
@@ -285,7 +268,7 @@ func TestSet(t *testing.T) {
 	for _, testcase := range testcases {
 
 		t.Run(testcase.testcaseName, func(t *testing.T) {
-			parser := InitParser()
+			parser := NewParser()
 			err := parser.LoadFromFile(path)
 			if err != nil {
 				t.Errorf("Error! %v", err)
@@ -303,8 +286,8 @@ func TestSet(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	parser1 := InitParser()
-	parser2 := InitParser()
+	parser1 := NewParser()
+	parser2 := NewParser()
 
 	parser1.LoadFromString(stringINI)
 	got := parser1.String()
@@ -317,7 +300,7 @@ func TestString(t *testing.T) {
 
 func TestSaveToFile(t *testing.T) {
 	const outPath = "testdata/out.ini"
-	parser := InitParser()
+	parser := NewParser()
 	err := parser.LoadFromFile(path)
 	if err != nil {
 		t.Errorf("Error! %v", err)
