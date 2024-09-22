@@ -3,18 +3,6 @@ name: Go CI
 on: [push, pull_request]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.23.1'
-      - name: Build
-        run: go build -v ./...
-  
-
   golangci:
     runs-on: ubuntu-latest
     steps:
@@ -31,5 +19,12 @@ jobs:
         with:
           gofmt-path: './src'
           gofmt-flags: '-l -d'
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
       - name: Test with the Go CLI
-        run: go test ./pkg
+        run: go test -v ./pkg
