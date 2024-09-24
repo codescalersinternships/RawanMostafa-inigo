@@ -64,6 +64,17 @@ func populateExpectedMalformed(t *testing.T) map[string]map[string]string {
 	return expected
 }
 
+func populateExpectedDuplicate(t *testing.T) map[string]map[string]string {
+	t.Helper()
+	expected := map[string]map[string]string{
+		"owner": {
+			"name":         "John Doe",
+			"organization": "Acme Widgets Inc.",
+		},
+	}
+	return expected
+}
+
 func assertEquality(t *testing.T, obj1 any, obj2 any) {
 	t.Helper()
 	if reflect.TypeOf(obj1) != reflect.TypeOf(obj2) {
@@ -145,6 +156,27 @@ func TestLoadFromString(t *testing.T) {
 		}
 
 		expected := populateExpectedMalformed(t)
+
+		assertEquality(t, expected, parser.sections)
+	})
+
+	t.Run("test duplicate section", func(t *testing.T) {
+		const duplicateSectionINI = `; last modified 1 April 2001 by John Doe
+				[owner]
+				name = John Doe
+				organization = Acme Widgets Inc.
+	
+				[owner]
+				name = John Doe
+				organization = Acme Widgets Inc.`
+
+		parser := NewParser()
+		err := parser.LoadFromString(duplicateSectionINI)
+		if err != nil {
+			t.Error(err)
+		}
+
+		expected := populateExpectedDuplicate(t)
 
 		assertEquality(t, expected, parser.sections)
 	})
