@@ -15,6 +15,7 @@ var ErrNoKey = errors.New("key not found")
 var ErrNoSection = errors.New("section not found")
 var ErrNotINI = errors.New("this is not an ini file")
 var ErrGlobalKey = errors.New("global keys aren't supported")
+var ErrFileNotExist = errors.New("file doesn't exist")
 
 // The Parser acts as the data structure storing all of the parsed sections
 type Parser struct {
@@ -88,7 +89,7 @@ func (i Parser) LoadFromFile(path string) error {
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("error in reading the file: %w", err)
+		return ErrFileNotExist
 	}
 	i.LoadFromString(string(data))
 	return nil

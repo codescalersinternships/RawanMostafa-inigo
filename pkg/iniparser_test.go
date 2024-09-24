@@ -1,6 +1,7 @@
 package iniparser
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -107,7 +108,7 @@ func TestLoadFromString(t *testing.T) {
 				organization = Acme Widgets Inc.
 	
 				[database]`
-				
+
 		parser := NewParser()
 		err := parser.LoadFromString(IniFile)
 		assertEquality(t, err, ErrGlobalKey)
@@ -122,23 +123,23 @@ func TestLoadFromFile(t *testing.T) {
 		testcaseName string
 		filePath     string
 		expected     map[string]map[string]string
-		err          string
+		err          error
 	}{
 		{
 			testcaseName: "Normal case: ini file is present",
 			filePath:     "testdata/file.ini",
 			expected:     expectedFile,
-			err:          "",
+			err:          nil,
 		},
 		{
 			testcaseName: "corner case: not an ini file",
 			filePath:     "testdata/file.txt",
-			err:          "this is not an ini file",
+			err:          ErrNotINI,
 		},
 		{
 			testcaseName: "corner case: file not found",
 			filePath:     "testdata/filex.ini",
-			err:          "error in reading the file: open testdata/filex.ini: no such file or directory",
+			err:          ErrFileNotExist,
 		},
 	}
 	for _, testcase := range testcases {
@@ -147,11 +148,10 @@ func TestLoadFromFile(t *testing.T) {
 			parser := NewParser()
 
 			err := parser.LoadFromFile(testcase.filePath)
-			if testcase.err == "" {
+			if testcase.err == nil {
 				assertEquality(t, expectedFile, parser.sections)
-			} else {
-				assertEquality(t, testcase.err, err.Error())
 			}
+			assertEquality(t, errors.Is(err, testcase.err), true)
 
 		})
 	}
@@ -246,26 +246,26 @@ func TestSet(t *testing.T) {
 		sectionName  string
 		key          string
 		value        string
-		err          string
+		err          error
 	}{
 		{
 			testcaseName: "Normal case: section and key are present",
 			sectionName:  "database",
 			key:          "server",
 			value:        "127.0.0.1",
-			err:          "",
+			err:          nil,
 		},
 		{
 			testcaseName: "corner case: section not found",
 			sectionName:  "user",
 			key:          "server",
-			err:          "section not found",
+			err:          ErrNoSection,
 		},
 		{
 			testcaseName: "corner case: key not found",
 			sectionName:  "database",
 			key:          "size",
-			err:          "key not found",
+			err:          ErrNoKey,
 		},
 	}
 	for _, testcase := range testcases {
@@ -277,12 +277,11 @@ func TestSet(t *testing.T) {
 				t.Errorf("Error! %v", err)
 			}
 			err = parser.Set(testcase.sectionName, testcase.key, testcase.value)
-			if testcase.err == "" {
+			if testcase.err == nil {
 				value := parser.sections[testcase.sectionName][testcase.key]
 				assertEquality(t, testcase.value, value)
-			} else {
-				assertEquality(t, testcase.err, err.Error())
 			}
+			assertEquality(t, errors.Is(err, testcase.err), true)
 		})
 	}
 
