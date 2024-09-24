@@ -173,6 +173,21 @@ func TestGetSectionNames(t *testing.T) {
 		assertEquality(t, nil, err)
 	})
 
+	t.Run("Corner case: no sections", func(t *testing.T) {
+
+		parser := NewParser()
+		err := parser.LoadFromString("")
+		if err != nil {
+			t.Errorf("Error! %v", err)
+		}
+		names, err := parser.GetSectionNames()
+
+		expected := make([]string, 0)
+
+		assertEquality(t, expected, names)
+		assertEquality(t, nil, err)
+	})
+
 }
 
 func TestGetSections(t *testing.T) {
@@ -188,6 +203,21 @@ func TestGetSections(t *testing.T) {
 
 		expected := populateExpectedNormal(t)
 		assertEquality(t, expected, got)
+		assertEquality(t, nil, err)
+	})
+
+	t.Run("Corner case: no sections", func(t *testing.T) {
+
+		parser := NewParser()
+		err := parser.LoadFromString("")
+		if err != nil {
+			t.Errorf("Error! %v", err)
+		}
+		names, err := parser.GetSections()
+
+		expected := make(map[string]map[string]string, 0)
+
+		assertEquality(t, expected, names)
 		assertEquality(t, nil, err)
 	})
 
