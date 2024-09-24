@@ -54,6 +54,16 @@ func populateExpectedEmptySection(t *testing.T) map[string]map[string]string {
 	return expected
 }
 
+func populateExpectedMalformed(t *testing.T) map[string]map[string]string {
+	t.Helper()
+	expected := map[string]map[string]string{
+		"owner": {
+			"organization": "Acme Widgets Inc.",
+		},
+	}
+	return expected
+}
+
 func assertEquality(t *testing.T, obj1 any, obj2 any) {
 	t.Helper()
 	if reflect.TypeOf(obj1) != reflect.TypeOf(obj2) {
@@ -118,6 +128,25 @@ func TestLoadFromString(t *testing.T) {
 		parser := NewParser()
 		err := parser.LoadFromString(IniFile)
 		assertEquality(t, err, ErrGlobalKey)
+	})
+
+	t.Run("test malformed section", func(t *testing.T) {
+		const malformedINI = `; last modified 1 April 2001 by John Doe
+				[owner]
+				name  John Doe
+				organization = Acme Widgets Inc.
+				[title
+	`
+
+		parser := NewParser()
+		err := parser.LoadFromString(malformedINI)
+		if err != nil {
+			t.Error(err)
+		}
+
+		expected := populateExpectedMalformed(t)
+
+		assertEquality(t, expected, parser.sections)
 	})
 }
 
