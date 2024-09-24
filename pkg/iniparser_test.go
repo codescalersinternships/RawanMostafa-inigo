@@ -22,43 +22,33 @@ port = 143
 key0 = val0    
 key1 = val1`
 
-func populateExpectedNormal(t *testing.T) map[string]section {
+func populateExpectedNormal(t *testing.T) map[string]map[string]string {
 	t.Helper()
-	expected := map[string]section{
-		"owner": {
-			map_: map[string]string{
-				"name":         "John Doe",
-				"organization": "Acme Widgets Inc.",
-			},
+	expected := map[string]map[string]string{
+		"owner": map[string]string{
+			"name":         "John Doe",
+			"organization": "Acme Widgets Inc.",
 		},
-		"database": {
-			map_: map[string]string{
-				"server": "192.0.2.62",
-				"port":   "143",
-			},
+		"database": map[string]string{
+			"server": "192.0.2.62",
+			"port":   "143",
 		},
-		"section": {
-			map_: map[string]string{
-				"key0": "val0",
-				"key1": "val1",
-			},
+		"section": map[string]string{
+			"key0": "val0",
+			"key1": "val1",
 		},
 	}
 	return expected
 }
 
-func populateExpectedEmptySection(t *testing.T) map[string]section {
+func populateExpectedEmptySection(t *testing.T) map[string]map[string]string {
 	t.Helper()
-	expected := map[string]section{
-		"owner": {
-			map_: map[string]string{
-				"name":         "John Doe",
-				"organization": "Acme Widgets Inc.",
-			},
+	expected := map[string]map[string]string{
+		"owner": map[string]string{
+			"name":         "John Doe",
+			"organization": "Acme Widgets Inc.",
 		},
-		"database": {
-			map_: map[string]string{},
-		},
+		"database": map[string]string{},
 	}
 	return expected
 }
@@ -118,7 +108,7 @@ func TestLoadFromFile(t *testing.T) {
 	testcases := []struct {
 		testcaseName string
 		filePath     string
-		expected     map[string]section
+		expected     map[string]map[string]string
 		err          string
 	}{
 		{
@@ -275,7 +265,7 @@ func TestSet(t *testing.T) {
 			}
 			err = parser.Set(testcase.sectionName, testcase.key, testcase.value)
 			if testcase.err == "" {
-				value := parser.sections[testcase.sectionName].map_[testcase.key]
+				value := parser.sections[testcase.sectionName][testcase.key]
 				assertEquality(t, testcase.value, value)
 			} else {
 				assertEquality(t, testcase.err, err.Error())

@@ -15,27 +15,22 @@ var ErrNoKey = errors.New("key not found")
 var ErrNoSection = errors.New("section not found")
 var ErrNotINI = errors.New("this is not an ini file")
 
-// The section acts as a type representing the value of the iniparser map
-type section struct {
-	map_ map[string]string
-}
-
 // The Parser acts as the data structure storing all of the parsed sections
 type Parser struct {
-	sections map[string]section
+	sections map[string]map[string]string
 }
 
 // NewParser returns a Parser type object
 // NewParser is an essential call to get a parser to be able to access its APIs
 func NewParser() Parser {
 	return Parser{
-		make(map[string]section),
+		make(map[string]map[string]string),
 	}
 }
 
-func (i Parser) populateINI(lines []string) {
+func (i Parser) parse(lines []string) {
 	var title string
-	var sec section
+	var sec map[string]string
 	for _, line := range lines {
 
 		line = strings.TrimSpace(line)
@@ -47,14 +42,14 @@ func (i Parser) populateINI(lines []string) {
 				i.sections[title] = sec
 			}
 			title = strings.Trim(line, "[]")
-			sec = section{map_: make(map[string]string)}
+			sec = make(map[string]string)
 
 		} else if strings.Contains(line, "=") {
 
 			parts := strings.SplitN(line, "=", 2)
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
-			sec.map_[key] = value
+			sec[key] = value
 		}
 	}
 	if title != "" {
@@ -70,7 +65,7 @@ func (i Parser) populateINI(lines []string) {
 func (i Parser) LoadFromString(data string) {
 
 	lines := strings.Split(data, "\n")
-	i.populateINI(lines)
+	i.parse(lines)
 }
 
 // LoadFromFile is a method that takes a path to an ini file and parses it into the caller Parser object
@@ -108,9 +103,9 @@ func (i Parser) GetSectionNames() ([]string, error) {
 
 // GetSections is a method that returns a map[string]section representing
 // the data structure of the caller Parser object and an error in case of empty sections
-func (i Parser) GetSections() (map[string]section, error) {
+func (i Parser) GetSections() (map[string]map[string]string, error) {
 	if len(i.sections) == 0 {
-		return make(map[string]section, 0), nil
+		return make(map[string]map[string]string, 0), nil
 	}
 	return i.sections, nil
 }
@@ -119,7 +114,7 @@ func (i Parser) GetSections() (map[string]section, error) {
 // and returns the value of this key and a boolean to indicate if found or not
 func (i Parser) Get(sectionName string, key string) (string, bool) {
 
-	val, exists := i.sections[sectionName].map_[key]
+	val, exists := i.sections[sectionName][key]
 	return val, exists
 }
 
@@ -134,10 +129,10 @@ func (i Parser) Set(sectionName string, key string, value string) error {
 	if _, ok := i.sections[sectionName]; !ok {
 		return ErrNoSection
 	}
-	if _, ok := i.sections[sectionName].map_[key]; !ok {
+	if _, ok := i.sections[sectionName][key]; !ok {
 		return ErrNoKey
 	}
-	i.sections[sectionName].map_[key] = value
+	i.sections[sectionName][key] = value
 	return nil
 }
 
@@ -155,12 +150,12 @@ func (i Parser) String() string {
 	for _, sectionName := range sectionNames {
 		keys := make([]string, 0)
 		result += fmt.Sprintf("[%s]\n", sectionName)
-		for key := range i.sections[sectionName].map_ {
+		for key := range i.sections[sectionName] {
 			keys = append(keys, key)
 		}
 		sort.Strings(keys)
 		for _, key := range keys {
-			result += fmt.Sprintf("%s = %s\n", key, i.sections[sectionName].map_[key])
+			result += fmt.Sprintf("%s = %s\n", key, i.sections[sectionName][key])
 		}
 	}
 	return fmt.Sprint(result)
