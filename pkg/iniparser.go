@@ -14,6 +14,7 @@ import (
 var ErrNoKey = errors.New("key not found")
 var ErrNoSection = errors.New("section not found")
 var ErrNotINI = errors.New("this is not an ini file")
+var ErrGlobalKey = errors.New("global keys aren't supported")
 
 // The Parser acts as the data structure storing all of the parsed sections
 type Parser struct {
@@ -28,9 +29,10 @@ func NewParser() Parser {
 	}
 }
 
-func (i Parser) parse(lines []string) {
+func (i Parser) parse(lines []string) error {
 	var title string
 	var sec map[string]string
+	inSection := false
 	for _, line := range lines {
 
 		line = strings.TrimSpace(line)
@@ -38,6 +40,7 @@ func (i Parser) parse(lines []string) {
 			continue
 		}
 		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+			inSection = true
 			if title != "" {
 				i.sections[title] = sec
 			}
@@ -45,7 +48,9 @@ func (i Parser) parse(lines []string) {
 			sec = make(map[string]string)
 
 		} else if strings.Contains(line, "=") {
-
+			if !inSection {
+				return ErrGlobalKey
+			}
 			parts := strings.SplitN(line, "=", 2)
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
@@ -55,6 +60,7 @@ func (i Parser) parse(lines []string) {
 	if title != "" {
 		i.sections[title] = sec
 	}
+	return nil
 }
 
 // LoadFromString is a method that takes a string ini configs and parses them into the caller Parser object
@@ -62,10 +68,11 @@ func (i Parser) parse(lines []string) {
 // 1- There're no global keys, every keys need to be part of a section
 // 2- The key value separator is just =
 // 3- Comments are only valid at the beginning of the line
-func (i Parser) LoadFromString(data string) {
+func (i Parser) LoadFromString(data string) (err error) {
 
 	lines := strings.Split(data, "\n")
-	i.parse(lines)
+	err = i.parse(lines)
+	return
 }
 
 // LoadFromFile is a method that takes a path to an ini file and parses it into the caller Parser object

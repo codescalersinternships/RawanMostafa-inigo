@@ -25,15 +25,15 @@ key1 = val1`
 func populateExpectedNormal(t *testing.T) map[string]map[string]string {
 	t.Helper()
 	expected := map[string]map[string]string{
-		"owner": map[string]string{
+		"owner": {
 			"name":         "John Doe",
 			"organization": "Acme Widgets Inc.",
 		},
-		"database": map[string]string{
+		"database": {
 			"server": "192.0.2.62",
 			"port":   "143",
 		},
-		"section": map[string]string{
+		"section": {
 			"key0": "val0",
 			"key1": "val1",
 		},
@@ -44,11 +44,11 @@ func populateExpectedNormal(t *testing.T) map[string]map[string]string {
 func populateExpectedEmptySection(t *testing.T) map[string]map[string]string {
 	t.Helper()
 	expected := map[string]map[string]string{
-		"owner": map[string]string{
+		"owner": {
 			"name":         "John Doe",
 			"organization": "Acme Widgets Inc.",
 		},
-		"database": map[string]string{},
+		"database": {},
 	}
 	return expected
 }
@@ -98,6 +98,19 @@ func TestLoadFromString(t *testing.T) {
 		expected := populateExpectedEmptySection(t)
 
 		assertEquality(t, expected, parser.sections)
+	})
+
+	t.Run("test global key found", func(t *testing.T) {
+		const IniFile = `; last modified 1 April 2001 by John Doe
+				name = John Doe
+				[owner]
+				organization = Acme Widgets Inc.
+	
+				[database]`
+				
+		parser := NewParser()
+		err := parser.LoadFromString(IniFile)
+		assertEquality(t, err, ErrGlobalKey)
 	})
 }
 
