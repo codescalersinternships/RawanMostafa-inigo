@@ -91,7 +91,10 @@ func (i Parser) LoadFromFile(path string) error {
 	if err != nil {
 		return ErrFileNotExist
 	}
-	i.LoadFromString(string(data))
+	err = i.LoadFromString(string(data))
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -78,7 +78,10 @@ func TestLoadFromString(t *testing.T) {
 	t.Run("test normal ini file", func(t *testing.T) {
 
 		parser := NewParser()
-		parser.LoadFromString(stringINI)
+		err := parser.LoadFromString(stringINI)
+		if err != nil {
+			t.Error(err)
+		}
 
 		expected := populateExpectedNormal(t)
 
@@ -94,7 +97,10 @@ func TestLoadFromString(t *testing.T) {
 	
 				[database]`
 		parser := NewParser()
-		parser.LoadFromString(emptySectionINI)
+		err := parser.LoadFromString(emptySectionINI)
+		if err != nil {
+			t.Error(err)
+		}
 
 		expected := populateExpectedEmptySection(t)
 
@@ -178,7 +184,7 @@ func TestGetSectionNames(t *testing.T) {
 		parser := NewParser()
 		err := parser.LoadFromString("")
 		if err != nil {
-			t.Errorf("Error! %v", err)
+			t.Error(err)
 		}
 		names, err := parser.GetSectionNames()
 
@@ -211,7 +217,7 @@ func TestGetSections(t *testing.T) {
 		parser := NewParser()
 		err := parser.LoadFromString("")
 		if err != nil {
-			t.Errorf("Error! %v", err)
+			t.Error(err)
 		}
 		names, err := parser.GetSections()
 
@@ -321,10 +327,16 @@ func TestString(t *testing.T) {
 	parser1 := NewParser()
 	parser2 := NewParser()
 
-	parser1.LoadFromString(stringINI)
+	err := parser1.LoadFromString(stringINI)
+	if err != nil {
+		t.Error(err)
+	}
 	got := parser1.String()
 
-	parser2.LoadFromString(got)
+	err = parser2.LoadFromString(got)
+	if err != nil {
+		t.Error(err)
+	}
 
 	assertEquality(t, parser1.sections, parser2.sections)
 	assertEquality(t, fmt.Sprint(parser1), fmt.Sprint(parser2))
