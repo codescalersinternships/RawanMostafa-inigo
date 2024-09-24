@@ -147,7 +147,7 @@ func (i Parser) Set(sectionName string, key string, value string) error {
 // The returned string won't include the comments
 // Also,it tells fmt pkg how to print the object
 func (i Parser) String() string {
-	sectionNames := make([]string, 0)
+	sectionNames := make([]string, 0, len(i.sections))
 	for sectionName := range i.sections {
 		sectionNames = append(sectionNames, sectionName)
 	}
@@ -155,7 +155,7 @@ func (i Parser) String() string {
 
 	var b strings.Builder
 	for _, sectionName := range sectionNames {
-		keys := make([]string, 0)
+		keys := make([]string, 0, len(i.sections[sectionName]))
 		b.WriteString(fmt.Sprintf("[%s]\n", sectionName))
 		for key := range i.sections[sectionName] {
 			keys = append(keys, key)
