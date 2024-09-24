@@ -147,25 +147,25 @@ func (i Parser) Set(sectionName string, key string, value string) error {
 // The returned string won't include the comments
 // Also,it tells fmt pkg how to print the object
 func (i Parser) String() string {
-	var result string
 	sectionNames := make([]string, 0)
 	for sectionName := range i.sections {
 		sectionNames = append(sectionNames, sectionName)
 	}
 	sort.Strings(sectionNames)
 
+	var b strings.Builder
 	for _, sectionName := range sectionNames {
 		keys := make([]string, 0)
-		result += fmt.Sprintf("[%s]\n", sectionName)
+		b.WriteString(fmt.Sprintf("[%s]\n", sectionName))
 		for key := range i.sections[sectionName] {
 			keys = append(keys, key)
 		}
 		sort.Strings(keys)
 		for _, key := range keys {
-			result += fmt.Sprintf("%s = %s\n", key, i.sections[sectionName][key])
+			b.WriteString(fmt.Sprintf("%s = %s\n", key, i.sections[sectionName][key]))
 		}
 	}
-	return fmt.Sprint(result)
+	return b.String()
 }
 
 // SaveToFile is a method that takes a path to an output file and returns an error
