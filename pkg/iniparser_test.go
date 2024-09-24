@@ -331,18 +331,24 @@ func TestString(t *testing.T) {
 }
 
 func TestSaveToFile(t *testing.T) {
-	const outPath = "testdata/out.ini"
+
 	parser := NewParser()
 	err := parser.LoadFromFile(path)
 	if err != nil {
 		t.Errorf("Error! %v", err)
 	}
 
-	err = parser.SaveToFile(outPath)
+	file, err := os.CreateTemp("", "out.ini")
+	if err != nil {
+		t.Errorf("Error! %v", err)
+	}
+	defer os.Remove(file.Name())
+
+	err = parser.SaveToFile(file.Name())
 	if err != nil {
 		t.Errorf("Error! %v", err)
 	}
 
 	stringFile := parser.String()
-	assertFile(t, outPath, stringFile)
+	assertFile(t, file.Name(), stringFile)
 }
